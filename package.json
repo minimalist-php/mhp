@@ -1,0 +1,19 @@
+{
+  "name": "mhp",
+  "version": "2024.04.1",
+  "main": "index.js",
+  "bin": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/minimalist-php/mhp.git"
+  },
+  "license": "0BSD",
+  "bugs": {
+    "url": "https://github.com/minimalist-php/mhp/issues"
+  },
+  "homepage": "https://github.com/minimalist-php/mhp#readme",
+  "dependencies": {
+    "chokidar": "^3.5.3",
+    "php-array-reader": "^2.1.1"
+  }
+}
