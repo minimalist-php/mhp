@@ -16,6 +16,7 @@ const compile = ({ file, filename }) => {
 
   const rules = [
     'clutter',
+    'operators',
     'end_of_file',
     'spacing',
     'indentation',
@@ -25,7 +26,6 @@ const compile = ({ file, filename }) => {
     'lists',
     'assignments',
     'expressions',
-    'operators',
     'text',
     'blank_lines'
   ]
@@ -154,76 +154,74 @@ if (!existsSync('manifest.mhp')) {
   throw Error('manifest.mhp file required')
 }
 
-if (existsSync('manifest.mhp')) {
-  let needUpdate
+eventEmitter.on('compile', handleFile)
 
-  const manifestFile = readFileSync('manifest.mhp', 'utf-8')
-  if (!manifestFile.startsWith('return ')) {
-    throw Error('manifest.mhp should return a list')
-  }
-  let manifest = compile({ file: manifestFile, filename: 'manifest.mhp' })
-  if (manifest.error) {
-    throw Error(manifest.error)
-  }
-  manifest = phpArrayReader.fromString(manifest.compiled.replace('return ', ''))
-  const { repository, version, modules } = manifest
+let needUpdate
 
-  if (!repository || !version) {
-    throw Error('manifest.mhp must include repository and version')
-  }
+const manifestFile = readFileSync('manifest.mhp', 'utf-8')
+if (!manifestFile.startsWith('return ')) {
+  throw Error('manifest.mhp should return a list')
+}
+let manifest = compile({ file: manifestFile, filename: 'manifest.mhp' })
+if (manifest.error) {
+  throw Error(manifest.error)
+}
+manifest = phpArrayReader.fromString(manifest.compiled.replace('return ', ''))
+const { repository, version, modules } = manifest
 
-  if (existsSync('php_modules/manifest.mhp')) {
-    const installedModules = readFileSync('php_modules/manifest.mhp', 'utf-8')
-    if (installedModules !== manifestFile) {
-      needUpdate = true
-    }
-  }
+if (!repository || !version) {
+  throw Error('manifest.mhp must include repository and version')
+}
 
-  if (modules && !existsSync('php_modules/manifest.mhp')) {
-    if (!existsSync('php_modules')) {
-      mkdirSync('php_modules')
-    }
-    writeFileSync('php_modules/manifest.mhp', manifestFile)
+if (existsSync('php_modules/manifest.mhp')) {
+  const installedModules = readFileSync('php_modules/manifest.mhp', 'utf-8')
+  if (installedModules !== manifestFile) {
     needUpdate = true
-  }
-
-  if (!needUpdate) {
-    eventEmitter.emit('compile')
-  }
-
-  if (needUpdate) {
-    modules.every(async (module, index) => {
-      let moduleFile = await fetch(module).then(async response => {
-        const text = await response.text()
-        if (response.status === 404) {
-          console.log(text)
-          rmSync('php_modules/manifest.mhp')
-          return false
-        }
-        return text
-      })
-
-      if (!moduleFile) return false
-
-      moduleFile = moduleFile.replace('<?php', `<?php\n# ${module}`)
-      const moduleParts = module.split('/')
-
-      const vendor = moduleParts[4]
-      const [repository, version] = moduleParts[5].split('@')
-
-      if (!existsSync(`php_modules/${vendor}`)) {
-        mkdirSync(`php_modules/${vendor}`)
-      }
-
-      writeFileSync(`php_modules/${vendor}/${repository}@${version}.php`, moduleFile)
-
-      if (index === modules.length - 1) {
-        eventEmitter.emit('compile')
-      }
-
-      return true
-    })
   }
 }
 
-eventEmitter.on('compile', handleFile)
+if (modules && !existsSync('php_modules/manifest.mhp')) {
+  if (!existsSync('php_modules')) {
+    mkdirSync('php_modules')
+  }
+  writeFileSync('php_modules/manifest.mhp', manifestFile)
+  needUpdate = true
+}
+
+if (!needUpdate) {
+  eventEmitter.emit('compile')
+}
+
+if (needUpdate) {
+  modules.every(async (module, index) => {
+    let moduleFile = await fetch(module).then(async response => {
+      const text = await response.text()
+      if (response.status === 404) {
+        console.log(text)
+        rmSync('php_modules/manifest.mhp')
+        return false
+      }
+      return text
+    })
+
+    if (!moduleFile) return false
+
+    moduleFile = moduleFile.replace('<?php', `<?php\n# ${module}`)
+    const moduleParts = module.split('/')
+
+    const vendor = moduleParts[4]
+    const [repository, version] = moduleParts[5].split('@')
+
+    if (!existsSync(`php_modules/${vendor}`)) {
+      mkdirSync(`php_modules/${vendor}`)
+    }
+
+    writeFileSync(`php_modules/${vendor}/${repository}@${version}.php`, moduleFile)
+
+    if (index === modules.length - 1) {
+      eventEmitter.emit('compile')
+    }
+
+    return true
+  })
+}

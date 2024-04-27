@@ -50,7 +50,7 @@ module.exports = ({ lines, filename }) => {
         return false
       }
 
-      if (multilineString.line) {
+      if (!closureDeclaration && multilineString.line) {
         return true
       }
 
@@ -93,6 +93,23 @@ module.exports = ({ lines, filename }) => {
         return true
       }
 
+      const lineAfter = lines[index + 1]
+
+      if (lineAfter && !lineAfter.startsWith(`${indentationLevel} `)) {
+        const linesReplacements = {
+          '    }': '};  }',
+          '        }': '    };  }'
+        }
+
+        const line = Object.keys(linesReplacements).find(line => lines[index] === line)
+        if (line) {
+          lines[closureDeclaration.index] = `${closureDeclaration.line} {`
+          lines[index] = linesReplacements[line]
+          closureDeclaration = {}
+          return true
+        }
+      }
+
       if (lines[index] === '') {
         const lastLine = lines.length - 1 === index
         const topLevelClosure = indentationLevel === ''
@@ -107,7 +124,7 @@ module.exports = ({ lines, filename }) => {
           return true
         }
 
-        const remainingExpressionsInTheScope = !lastLine && lines[index + 1].startsWith(`${indentationLevel} `)
+        const remainingExpressionsInTheScope = !lastLine && lineAfter.startsWith(`${indentationLevel} `)
         if (remainingExpressionsInTheScope) {
           return true
         }
@@ -129,7 +146,7 @@ module.exports = ({ lines, filename }) => {
 
         const twoBlankLines = linesBefore[0] === '' && linesBefore[1] === '' && linesBefore[2] !== ''
 
-        if (!twoBlankLines) {
+        if (!twoBlankLines && !lines[index].startsWith('STRING')) {
           console.log(`${filename} ${index + 1}`, '- There must be two blank lines after each top level closure')
           return false
         }

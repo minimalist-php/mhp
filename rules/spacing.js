@@ -79,7 +79,7 @@ module.exports = ({ lines, filename }) => {
         ignoreText({
           text: lines[index],
           transform: text => {
-            itIsBadlySpaced = text.replaceAll(') ', '').replaceAll('))', '').slice(0, -1).includes(')')
+            itIsBadlySpaced = text.replaceAll(';', '').replaceAll(') ', '').replaceAll('))', '').slice(0, -1).includes(')')
             return text
           }
         })

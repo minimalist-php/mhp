@@ -134,6 +134,7 @@ module.exports = ({ lines, filename }) => {
         const assignmentsReplacements = [
           [` ${assignment} `, ` $${assignment} `],
           [`...${assignment})`, `...$${assignment})`],
+          [`(${assignment} `, `($${assignment} `],
           [`(${assignment})`, `($${assignment})`],
           [`(${assignment},`, `($${assignment},`],
           [`(${assignment}(`, `($${assignment}(`],

@@ -20,12 +20,8 @@ module.exports = ({ lines, filename }) => {
       ' not ': ' ! ',
       '(not ': '(! ',
       // Comparison
-      'is_equal_to ': '=== ',
-      'is_not_equal_to ': '!== ',
-      'is_less_than ': '< ',
-      'is_greater_than ': '> ',
-      'is_less_than_or_equal_to ': '<= ',
-      'is_greater_than_or_equal_to ': '>= '
+      '= ': '=== ',
+      '!= ': '!== '
     }
 
     arrayCompose([

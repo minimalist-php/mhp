@@ -32,7 +32,7 @@ module.exports = ({ lines, filename }) => {
         if (linesBefore[0] !== undefined) {
           if (!lines[index].startsWith(' ')) {
             if (linesBefore[0] !== '' || linesBefore[1] === '') {
-              console.log(`${filename} ${index + 1}`, '- There must be one blank line before each top level array')
+              console.log(`${filename} ${index + 1}`, '- There must be one blank line before each top level list')
               return false
             }
           }
@@ -48,7 +48,7 @@ module.exports = ({ lines, filename }) => {
         ]
 
         if (!lines[index].startsWith(' ') && (linesAfter[0] !== '' || linesAfter[1] === '')) {
-          console.log(lines[index], `${filename} ${index + 1}`, '- There must be one blank line after each top level array')
+          console.log(`${filename} ${index + 1}`, '- There must be one blank line after each top level list')
           return false
         }
 
