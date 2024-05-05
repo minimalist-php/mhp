@@ -12,15 +12,14 @@ module.exports = ({ lines, filename }) => {
     ''
   ]
 
-  return indentation.every(indentationLevel => {
-    let temporalAssignments = []
-    let temporalIndentationLevel = ''
-    let scopeAssignments = []
-    let assignments = []
-    let ignoreFunctionScope = false
-    let multilineString = {}
+  let closure = false
+  const closures = []
+  const parsedLines = []
+
+  let multilineString = {}
+  indentation.every(indentationLevel => {
     lines.every((line, index) => {
-      if (lines[index].trimStart().startsWith('#')) {
+      if (lines[index].trimStart().startsWith('#') || lines[index] === '' || parsedLines.includes(index)) {
         return true
       }
       multilineString = matchMultilineText({ lines, index, filename, multilineString })
@@ -32,39 +31,66 @@ module.exports = ({ lines, filename }) => {
         return true
       }
 
-      lines[index] = lines[index].replaceAll('reference_to ', '&$')
-
-      if (!lines[index].startsWith(indentationLevel)) return true
-
       const currentIndentationLevel = lines[index].startsWith(indentationLevel) && !lines[index].startsWith(`${indentationLevel} `)
-      const isTemporalIndentationLevel = temporalIndentationLevel !== '' && lines[index].startsWith(temporalIndentationLevel) && !lines[index].startsWith(`${temporalIndentationLevel} `)
 
-      if (isTemporalIndentationLevel && temporalAssignments.length !== 0) {
-        assignments = temporalAssignments
-        temporalAssignments = []
-        temporalIndentationLevel = ''
-      }
+      if (currentIndentationLevel && lines[index].includes('function (')) {
+        closures.push([index])
 
-      if (ignoreFunctionScope && lines[index].startsWith(`${indentationLevel}}`)) {
-        ignoreFunctionScope = false
+        if (!lines[index].includes(' : ')) {
+          parsedLines.push(index)
+        }
+
+        closure = true
         return true
       }
 
-      if (ignoreFunctionScope) return true
-
-      if (!ignoreFunctionScope && currentIndentationLevel && lines[index].includes('function (')) {
-        ignoreFunctionScope = true
+      if (!currentIndentationLevel && closure) {
+        closures[closures.length - 1].push(index)
+        parsedLines.push(index)
+        return true
       }
 
-      let scopeAssignmentsLine = lines[index - 1]
-      if (scopeAssignmentsLine === '') {
-        scopeAssignmentsLine = lines[index - 2]
+      if (currentIndentationLevel && closure) {
+        parsedLines.push(index)
+        closure = false
+        return true
       }
-      if (scopeAssignmentsLine && scopeAssignmentsLine.includes('function (')) {
-        temporalAssignments = assignments
-        temporalIndentationLevel = ' '.repeat(lines[index].length - lines[index].trimStart().length)
-        assignments = []
-        scopeAssignments = scopeAssignmentsLine.match(/(?<=function \().*?(?=\))/g)
+
+      return true
+    })
+    return true
+  })
+
+  closures.push([])
+  lines.every((line, index) => {
+    if (lines[index].trimStart().startsWith('#') || lines[index] === '' || parsedLines.includes(index)) {
+      return true
+    }
+
+    multilineString = matchMultilineText({ lines, index, filename, multilineString })
+    if (multilineString.error) {
+      return false
+    }
+
+    if (!lines[index].endsWith('<<<STRING') && multilineString.line) {
+      return true
+    }
+
+    closures[closures.length - 1].push(index)
+    parsedLines.push(index)
+
+    return true
+  })
+
+  return closures.every(closure => {
+    const closureFirstLine = closure.find(() => true)
+    let assignments = []
+    closure.every(index => {
+      lines[index] = lines[index].replaceAll('reference_to ', '&$')
+      const firstLine = closureFirstLine === index
+
+      if (firstLine && lines[index].includes('function (')) {
+        let scopeAssignments = lines[index].match(/(?<=function \().*?(?=\))/g)
         if (scopeAssignments) {
           scopeAssignments = [...scopeAssignments][0]
 
@@ -72,7 +98,7 @@ module.exports = ({ lines, filename }) => {
             assignments = assignments.concat(scopeAssignments.replace('...', ''))
           }
         }
-        scopeAssignments = scopeAssignmentsLine.match(/(?<=use \().*?(?=\))/g)
+        scopeAssignments = lines[index].match(/(?<=use \().*?(?=\))/g)
         if (scopeAssignments) {
           scopeAssignments = [...scopeAssignments][0]
           if (scopeAssignments !== '') {
@@ -105,32 +131,12 @@ module.exports = ({ lines, filename }) => {
         return false
       }
 
-      const assignment = lines[index].split(' : ')
-      if (assignment.length > 1) {
-        lines[index] = lines[index].replace(' : ', ' = ')
-        assignments = assignments.concat([assignment[0].trimStart()])
-      }
-
-      let functionAssignments = lines[index].match(/(?<=function \().*?(?=\))/g)
-      if (functionAssignments) {
-        functionAssignments = [...functionAssignments][0]
-        if ([',', ':', '='].find(character => functionAssignments.includes(character))) {
-          console.log(`${filename} ${index + 1}`, '- Functions must have only one parameter and without default value')
-          return false
+      if (!firstLine || (firstLine && !lines[index].includes('function ('))) {
+        const assignment = lines[index].split(' : ')
+        if (assignment.length > 1) {
+          lines[index] = lines[index].replace(' : ', ' = ')
+          assignments = assignments.concat([assignment[0].trimStart()])
         }
-
-        if (functionAssignments !== '') {
-          assignments = assignments.concat(functionAssignments.replace('...', ''))
-        }
-      }
-
-      let functionScopeAssignments = lines[index].match(/(?<=use \().*?(?=\))/g)
-      if (functionScopeAssignments) {
-        functionScopeAssignments = [...functionScopeAssignments][0]
-        functionScopeAssignments = functionScopeAssignments.split(', ').map(assignment => {
-          return assignment.replace('&$', '')
-        })
-        assignments = assignments.concat(functionScopeAssignments)
       }
 
       assignments.every((assignment) => {
@@ -185,7 +191,6 @@ module.exports = ({ lines, filename }) => {
 
         return true
       })
-
       return true
     })
     return true

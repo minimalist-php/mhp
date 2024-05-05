@@ -60,12 +60,13 @@ module.exports = ({ lines, filename }) => {
         return blankLineBefore && blankLineTwoLinesBefore
       }
     })()
-    if (lines[index].trimStart().startsWith('return ') && (twoBlankLinesBefore || !blankLineBefore)) {
-      console.log(`${filename} ${index + 1}`, '- There must be one blank line before each return')
+
+    if (lines[index].trimStart().startsWith('return ') && (twoBlankLinesBefore || !blankLineBefore) && !lineBefore.includes('function (') && !lineBefore.trimStart().startsWith('if ')) {
+      console.log(`${filename} ${index + 1}`, '- There must be one blank line before the return statement')
       return false
     }
 
-    if (lines[index] === '' && lineAfter.trimStart().startsWith('return ')) {
+    if (lines[index] === '' && lineAfter.trimStart().startsWith('return ') && !lineBefore.includes('function (') && !lineBefore.trimStart().startsWith('if ')) {
       return true
     }
 

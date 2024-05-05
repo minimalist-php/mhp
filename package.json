@@ -1,6 +1,6 @@
 {
   "name": "mhp",
-  "version": "2024.04.1",
+  "version": "2024.05.2",
   "main": "index.js",
   "bin": "index.js",
   "repository": {
