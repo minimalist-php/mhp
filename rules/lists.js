@@ -23,6 +23,10 @@ module.exports = ({ lines, filename }) => {
         }
       }
 
+      if (arrayDeclaration.line && lines[index].trimStart() === '[') {
+        return true
+      }
+
       if (!arrayDeclaration.line && currentIndentationLevel && (lines[index].endsWith('[') || lines[index].endsWith('('))) {
         const linesBefore = [
           lines[index - 1],

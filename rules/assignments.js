@@ -13,6 +13,8 @@ module.exports = ({ lines, filename }) => {
   ]
 
   return indentation.every(indentationLevel => {
+    let temporalAssignments = []
+    let temporalIndentationLevel = ''
     let scopeAssignments = []
     let assignments = []
     let ignoreFunctionScope = false
@@ -35,6 +37,13 @@ module.exports = ({ lines, filename }) => {
       if (!lines[index].startsWith(indentationLevel)) return true
 
       const currentIndentationLevel = lines[index].startsWith(indentationLevel) && !lines[index].startsWith(`${indentationLevel} `)
+      const isTemporalIndentationLevel = temporalIndentationLevel !== '' && lines[index].startsWith(temporalIndentationLevel) && !lines[index].startsWith(`${temporalIndentationLevel} `)
+
+      if (isTemporalIndentationLevel && temporalAssignments.length !== 0) {
+        assignments = temporalAssignments
+        temporalAssignments = []
+        temporalIndentationLevel = ''
+      }
 
       if (ignoreFunctionScope && lines[index].startsWith(`${indentationLevel}}`)) {
         ignoreFunctionScope = false
@@ -52,6 +61,8 @@ module.exports = ({ lines, filename }) => {
         scopeAssignmentsLine = lines[index - 2]
       }
       if (scopeAssignmentsLine && scopeAssignmentsLine.includes('function (')) {
+        temporalAssignments = assignments
+        temporalIndentationLevel = ' '.repeat(lines[index].length - lines[index].trimStart().length)
         assignments = []
         scopeAssignments = scopeAssignmentsLine.match(/(?<=function \().*?(?=\))/g)
         if (scopeAssignments) {

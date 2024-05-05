@@ -15,13 +15,28 @@ module.exports = ({ lines, filename }) => {
       return true
     }
 
+    const clutter = {
+      ' == ': '=',
+      ' === ': '=',
+      ' !== ': '!=',
+      ' && ': ' and '
+    }
+
+    const badOperator = Object.keys(clutter).find(operator => lines[index].includes(operator))
+
+    if (badOperator) {
+      console.log(`${filename} ${index + 1}`, `- Use ${clutter[badOperator]} insted of ${badOperator}`)
+      return false
+    }
+
     const operatorsReplacements = {
       // Logical
       ' not ': ' ! ',
       '(not ': '(! ',
+      ' and ': ' && ',
       // Comparison
-      '= ': '=== ',
-      '!= ': '!== '
+      ' = ': ' === ',
+      ' != ': ' !== '
     }
 
     arrayCompose([
