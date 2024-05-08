@@ -9,7 +9,16 @@ const watcher = chokidar.watch('index.mhp', {
   persistent: true
 })
 
+if (!existsSync('manifest.mhp')) {
+  throw Error('manifest.mhp file required')
+}
+
+const manifestWatcher = chokidar.watch('manifest.mhp', {
+  persistent: true
+})
+
 watcher.on('change', () => eventEmitter.emit('compile'))
+manifestWatcher.on('change', () => eventEmitter.emit('compile'))
 
 const compile = ({ file, filename }) => {
   const lines = file.split('\n')
@@ -64,12 +73,12 @@ const resoveModule = ({ file, moduleFilename }) => {
   let moduleFile, moduleFilenameWithVersion
 
   const manifestFile = readFileSync('manifest.mhp', 'utf-8')
-  if (!manifestFile.startsWith('return ')) {
+  if (!manifestFile.trimStart().startsWith('return ')) {
     throw Error('manifest.mhp must return a list')
   }
   let manifest = compile({ file: manifestFile, filename: 'manifest.mhp' })
   if (manifest.error) {
-    throw Error(manifest.error)
+    return false
   }
   manifest = phpArrayReader.fromString(manifest.compiled.replace('return ', ''))
   const repository = manifest.repository
@@ -135,6 +144,16 @@ const resoveModule = ({ file, moduleFilename }) => {
 
 const handleFile = () => {
   console.clear()
+
+  const manifestFile = readFileSync('manifest.mhp', 'utf-8')
+  if (!manifestFile.trimStart().startsWith('return ')) {
+    throw Error('manifest.mhp must return a list')
+  }
+  let manifest = compile({ file: manifestFile, filename: 'manifest.mhp' })
+  if (manifest.error) {
+    return false
+  }
+
   const mainFile = readFileSync('index.mhp', 'utf-8')
   if (mainFile === '') {
     return
@@ -150,21 +169,17 @@ const handleFile = () => {
   writeFileSync('index.php', `<?php\n${bundle}`)
 }
 
-if (!existsSync('manifest.mhp')) {
-  throw Error('manifest.mhp file required')
-}
-
 eventEmitter.on('compile', handleFile)
 
 let needUpdate
 
 const manifestFile = readFileSync('manifest.mhp', 'utf-8')
-if (!manifestFile.startsWith('return ')) {
+if (!manifestFile.trimStart().startsWith('return ')) {
   throw Error('manifest.mhp should return a list')
 }
 let manifest = compile({ file: manifestFile, filename: 'manifest.mhp' })
 if (manifest.error) {
-  throw Error(manifest.error)
+  return false
 }
 manifest = phpArrayReader.fromString(manifest.compiled.replace('return ', ''))
 const { repository, version, modules } = manifest

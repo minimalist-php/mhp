@@ -83,7 +83,7 @@ module.exports = ({ lines, filename }) => {
   })
 
   return closures.every(closure => {
-    const closureFirstLine = closure.find(() => true)
+    const closureFirstLine = closure.slice(0, 1).pop()
     let assignments = []
     closure.every(index => {
       lines[index] = lines[index].replaceAll('reference_to ', '&$')

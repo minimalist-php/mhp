@@ -17,15 +17,16 @@ module.exports = ({ lines, filename }) => {
       return false
     }
 
-    if (lines[index] !== '' && !lines[index].trimStart().startsWith('#')) {
-      if (!lines[index].includes('function (') && !lines[index].includes('if (')) {
-        if (['{', '(', '[', ','].every(lineEnd => !lines[index].endsWith(lineEnd))) {
-          const nextLineExists = index + 1 < lines.length
-          const nextLine = lines[index + 1]
-          if (nextLineExists && [']', ')'].every(lineStart => !nextLine.trimStart().startsWith(lineStart))) {
-            lines[index] = `${lines[index]};`
-          }
-        }
+    if (lines[index] !== '' && !lines[index].trimStart().startsWith('#') && ['{', '(', '[', ','].every(lineEnd => !lines[index].endsWith(lineEnd))) {
+      const nextLineExists = index + 1 < lines.length
+
+      if (!nextLineExists) {
+        lines[lines.length] = ''
+      }
+
+      const nextLine = lines[index + 1]
+      if ([']', ')'].every(lineStart => !nextLine.trimStart().startsWith(lineStart))) {
+        lines[index] = `${lines[index]};`
       }
     }
 

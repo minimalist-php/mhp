@@ -20,7 +20,21 @@ module.exports = ({ lines, filename }) => {
 
       const tabs = lines[index].replaceAll('\t', '') !== lines[index]
       const doubleSpacing = lines[index].trimStart().includes('  ')
-      const endsWithSpace = lines[index].endsWith(' ')
+      const lineEndsWithSpace = lines[index].endsWith(' ')
+
+      const lineEndsWithComma = lines[index].endsWith(',')
+      const spaceBeforeComma = lines[index].includes(' ,')
+      const spaceMissingAfterComma = () => {
+        if (lines[index].length === lines[index].replaceAll(', ')) {
+          return false
+        }
+
+        return lines[index].replaceAll(', ').includes(',')
+      }
+
+      const spaceAfterOpeningBracket = lines[index].includes('[ ')
+      const spaceBeforeClosingBracket = lines[index].trimStart().includes(' ]')
+
       const spaceBeforeOpeningParentheses = (() => {
         let itIsBadlySpaced = false
 
@@ -100,8 +114,28 @@ module.exports = ({ lines, filename }) => {
             assign: 'Double spacing is not allowed'
           },
           {
-            case: endsWithSpace,
+            case: lineEndsWithSpace,
             assign: 'Lines must not end with spaces'
+          },
+          {
+            case: lineEndsWithComma,
+            assign: 'Lines must not end with comma'
+          },
+          {
+            case: spaceBeforeComma,
+            assign: 'Invalid space before comma'
+          },
+          {
+            case: spaceMissingAfterComma,
+            assign: 'Space missing after comma'
+          },
+          {
+            case: spaceAfterOpeningBracket,
+            assign: 'Invalid space after opening bracket'
+          },
+          {
+            case: spaceBeforeClosingBracket,
+            assign: 'Invalid space before closing bracket'
           },
           {
             case: spaceBeforeOpeningParentheses,

@@ -8,7 +8,7 @@ module.exports = ({ lines, filename }) => {
       return false
     }
 
-    if (multilineString.line) {
+    if (!lines[index].endsWith('<<<STRING') && multilineString.line) {
       return true
     }
 
@@ -26,43 +26,57 @@ module.exports = ({ lines, filename }) => {
       return true
     }
 
-    const linesReplacements = {
-      '};  };': [
-        '        };',
-        '};  };  };'
-      ]
+    const blankLineBefore = lineBefore === '' || lineBefore.replaceAll('};', '').replaceAll(' ', '') === ''
+    const twoBlankLinesBefore = (() => {
+      if (lines[index - 2] !== undefined) {
+        const blankLineTwoLinesBefore = lines[index - 2] === '' || lines[index - 2].replaceAll('};', '').replaceAll(' ', '') === ''
+        return blankLineBefore && blankLineTwoLinesBefore
+      }
+
+      return false
+    })()
+
+    if (!lines[index].startsWith(' ') && lines[index].endsWith('<<<STRING') && lineBefore !== '') {
+      console.log(`${filename} ${index + 1}`, '- Missing one blank line')
+      return false
     }
 
-    const lineReplacement = Object.keys(linesReplacements).find(line => {
-      return lines[index] === line && lineBefore === linesReplacements[line][0]
-    })
-
-    if (lineReplacement) {
-      lines[index] = ''
-      lines[index - 1] = linesReplacements[lineReplacement][1]
-    }
-
-    if (lines[index] === '        };' && ['    };', '    }'].find(line => line === lineAfter)) {
+    if (!lines[index].startsWith(' ') && lines[index].endsWith('<<<STRING') && twoBlankLinesBefore) {
       console.log(`${filename} ${index + 1}`, '- Invalid blank line')
       return false
     }
 
-    const validBeforeLineStart = [
-      '}',
-      ']',
-      'STRING'
-    ].find(lineStart => lineBefore.startsWith(lineStart))
+    if (lines[index].endsWith('<<<STRING')) {
+      return true
+    }
 
-    const blankLineBefore = lineBefore === '' || lineBefore.replaceAll('};', '').replaceAll(' ', '') === ''
-    const twoBlankLinesBefore = (() => {
-      if (lines[index - 2]) {
-        const blankLineTwoLinesBefore = lines[index - 2] === '' || lines[index - 2].replaceAll('};', '').replaceAll(' ', '') === ''
-        return blankLineBefore && blankLineTwoLinesBefore
-      }
-    })()
+    if (lines[index] === 'STRING;' && (lines[index + 2] !== undefined && !lines[index + 2].startsWith(' ')) && lines[index] === '' && lineAfter !== '') {
+      console.log(`${filename} ${index + 1}`, '- Missing one blank line')
+      return false
+    }
+
+    if (lines[index] === 'STRING;' && lineAfter === '' && (lines[index + 2] !== undefined && lines[index + 2].startsWith(' '))) {
+      console.log(`${filename} ${index + 1}`, '- Invalid blank line')
+      return false
+    }
+
+    if (lines[index].includes('function (') && lineBefore !== '') {
+      console.log(`${filename} ${index + 1}`, '- Missing one blank line')
+      return false
+    }
+
+    if (!lines[index].startsWith(' ') && lines[index].endsWith('[') && lineBefore !== '') {
+      console.log(`${filename} ${index + 1}`, '- Missing one blank line')
+      return false
+    }
+
+    if (lines[index].trimStart().startsWith(']') && lineAfter !== '') {
+      console.log(`${filename} ${index + 1}`, '- Missing one blank line')
+      return false
+    }
 
     if (lines[index].trimStart().startsWith('return ') && (twoBlankLinesBefore || !blankLineBefore) && !lineBefore.includes('function (') && !lineBefore.trimStart().startsWith('if ')) {
-      console.log(`${filename} ${index + 1}`, '- There must be one blank line before the return statement')
+      console.log(`${filename} ${index + 1}`, '- Missing one blank line')
       return false
     }
 
@@ -80,6 +94,12 @@ module.exports = ({ lines, filename }) => {
         console.log(`${filename} ${index + 1}`, '- Invalid blank line')
         return false
       }
+
+      const validBeforeLineStart = [
+        '}',
+        ']',
+        'STRING'
+      ].find(lineStart => lineBefore.startsWith(lineStart))
 
       if (!validBeforeLineStart && lineAfter.endsWith('[')) {
         console.log(`${filename} ${index + 1}`, '- Invalid blank line')
