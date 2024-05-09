@@ -70,7 +70,8 @@ module.exports = ({ lines, filename }) => {
       return false
     }
 
-    if (lines[index].trimStart().startsWith(']') && lineAfter !== '') {
+    if (lines[index].trimStart().startsWith(']') && lineAfter !== '' && lineAfter.replaceAll(' ', '').replaceAll('}', '').replaceAll(';', '') !== '') {
+      console.log(lineAfter)
       console.log(`${filename} ${index + 1}`, '- Missing one blank line')
       return false
     }
