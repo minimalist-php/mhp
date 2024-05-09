@@ -60,7 +60,7 @@ module.exports = ({ lines, filename }) => {
       return false
     }
 
-    if (lines[index].includes('function (') && lineBefore !== '') {
+    if ((lines[index].includes('function (') || lines[index].includes('if (')) && lineBefore !== '' && lineBefore.replaceAll(' ', '').replaceAll('}', '').replaceAll(']', '').replaceAll(';', '') !== '') {
       console.log(`${filename} ${index + 1}`, '- Missing one blank line')
       return false
     }
@@ -70,8 +70,7 @@ module.exports = ({ lines, filename }) => {
       return false
     }
 
-    if (lines[index].trimStart().startsWith(']') && lineAfter !== '' && lineAfter.replaceAll(' ', '').replaceAll('}', '').replaceAll(';', '') !== '') {
-      console.log(lineAfter)
+    if (lines[index].trimStart().startsWith(']') && lineAfter !== '' && lineAfter.replaceAll(' ', '').replaceAll('}', '').replaceAll(']', '').replaceAll(';', '') !== '') {
       console.log(`${filename} ${index + 1}`, '- Missing one blank line')
       return false
     }
