@@ -39,6 +39,82 @@ module.exports = ({ lines, filename }) => {
       ' != ': ' !== '
     }
 
+    let operatorBadSpacing = false
+
+    arrayCompose([
+      {
+        text: lines[index],
+        transform: line => {
+          if (line.replaceAll('<STRING>', '').replaceAll('<=', '').includes('<') && !line.includes(' < ')) {
+            operatorBadSpacing = '<'
+          }
+
+          if (line.replaceAll('<STRING>', '').replaceAll('>=', '').includes('>') && !line.includes(' > ')) {
+            operatorBadSpacing = '<'
+          }
+
+          if (line.replaceAll('<=', '').replaceAll('>=', '').includes('=') && !line.includes(' = ')) {
+            operatorBadSpacing = '='
+          }
+
+          if (line.includes('<=') && !line.includes(' <= ')) {
+            operatorBadSpacing = '<='
+          }
+
+          if (line.includes('>=') && !line.includes(' >= ')) {
+            operatorBadSpacing = '>='
+          }
+
+          if (line.includes('!=') && !line.includes(' != ')) {
+            operatorBadSpacing = '!='
+          }
+
+          if (line.includes('+') && !line.includes(' + ')) {
+            operatorBadSpacing = '+'
+          }
+
+          if (line.includes('-') && !line.replace(': -', ': - ').includes(' - ')) {
+            operatorBadSpacing = '-'
+          }
+
+          if (line.includes('*') && !line.includes(' * ')) {
+            operatorBadSpacing = '*'
+          }
+
+          if (line.includes('/') && !line.includes(' / ')) {
+            operatorBadSpacing = '/'
+          }
+
+          return line
+        }
+      },
+      ignoreText
+    ])
+
+    if (operatorBadSpacing) {
+      console.log(`${filename} ${index + 1}`, `- There must be a space before and after the ${operatorBadSpacing}`)
+      return false
+    }
+
+    arrayCompose([
+      {
+        text: lines[index],
+        transform: line => {
+          if (line.includes(': - ')) {
+            operatorBadSpacing = '-'
+          }
+
+          return line
+        }
+      },
+      ignoreText
+    ])
+
+    if (operatorBadSpacing) {
+      console.log(`${filename} ${index + 1}`, `- Invalid space after the ${operatorBadSpacing}`)
+      return false
+    }
+
     arrayCompose([
       {
         array: Object.keys(operatorsReplacements),

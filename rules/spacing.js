@@ -24,13 +24,27 @@ module.exports = ({ lines, filename }) => {
 
       const lineEndsWithComma = lines[index].endsWith(',')
       const spaceBeforeComma = lines[index].includes(' ,')
-      const spaceMissingAfterComma = () => {
+      const missingSpaceAfterComma = (() => {
         if (lines[index].length === lines[index].replaceAll(', ')) {
           return false
         }
 
         return lines[index].replaceAll(', ').includes(',')
-      }
+      })()
+
+      const InvalidSpaceBeforeOpeningBracket = (() => {
+        let itIsBadlySpaced = false
+
+        ignoreText({
+          text: lines[index],
+          transform: text => {
+            itIsBadlySpaced = (text.startsWith('return ') && text.replace('return [', '').includes(' [')) || text.trimStart().replace(' : [', '').replace(' return [', '').includes(' [')
+            return text
+          }
+        })
+
+        return itIsBadlySpaced
+      })()
 
       const spaceAfterOpeningBracket = lines[index].includes('[ ')
       const spaceBeforeClosingBracket = lines[index].trimStart().includes(' ]')
@@ -46,6 +60,9 @@ module.exports = ({ lines, filename }) => {
             }
             text = text.replace(' function (', ' function(')
             text = text.replace(' use (', ' use(')
+            text = text.replace(')use (', ')use(')
+            text = text.replace('< (', '<(')
+            text = text.replace('> (', '>(')
 
             if (text.startsWith('if (')) {
               text = text.replace('if (', 'if(')
@@ -65,7 +82,7 @@ module.exports = ({ lines, filename }) => {
         ignoreText({
           text: lines[index],
           transform: text => {
-            itIsBadlySpaced = text !== text.replace('( ', '(')
+            itIsBadlySpaced = (text !== text.replace('( ', '(')) || text.replaceAll('(; ', '').includes('(;')
             return text
           }
         })
@@ -87,13 +104,30 @@ module.exports = ({ lines, filename }) => {
         return itIsBadlySpaced
       })()
 
-      const withoutSpaceAfterClosingParentheses = (() => {
+      const missingSpaceAfterClosingParentheses = (() => {
         let itIsBadlySpaced = false
 
         ignoreText({
           text: lines[index],
           transform: text => {
             itIsBadlySpaced = text.replaceAll(';', '').replaceAll(') ', '').replaceAll('))', '').slice(0, -1).includes(')')
+            return text
+          }
+        })
+
+        return itIsBadlySpaced
+      })()
+
+      const missingSpaceAfterReturn = (() => {
+        let itIsBadlySpaced = false
+
+        ignoreText({
+          text: lines[index],
+          transform: text => {
+            itIsBadlySpaced = (text.replace(' return ', '').includes(' return(') || text.replace(' return ', '').includes(' return[')) && !text.endsWith(' return')
+            if (text.startsWith('return')) {
+              itIsBadlySpaced = text.replace('return ', '').includes('return(') || text.replace('return ', '').includes('return[')
+            }
             return text
           }
         })
@@ -126,8 +160,12 @@ module.exports = ({ lines, filename }) => {
             assign: 'Invalid space before comma'
           },
           {
-            case: spaceMissingAfterComma,
-            assign: 'Space missing after comma'
+            case: missingSpaceAfterComma,
+            assign: 'Missing space after comma'
+          },
+          {
+            case: InvalidSpaceBeforeOpeningBracket,
+            assign: 'Invalid space before opening bracket'
           },
           {
             case: spaceAfterOpeningBracket,
@@ -150,8 +188,12 @@ module.exports = ({ lines, filename }) => {
             assign: 'Invalid space before closing parentheses'
           },
           {
-            case: withoutSpaceAfterClosingParentheses,
-            assign: 'Space required afte closing parentheses'
+            case: missingSpaceAfterClosingParentheses,
+            assign: 'Space required after closing parentheses'
+          },
+          {
+            case: missingSpaceAfterReturn,
+            assign: 'Missing space after return'
           }
         ]
       })

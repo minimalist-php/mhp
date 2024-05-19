@@ -73,13 +73,15 @@ const resoveModule = ({ file, moduleFilename }) => {
   let moduleFile, moduleFilenameWithVersion
 
   const manifestFile = readFileSync('manifest.mhp', 'utf-8')
-  if (!manifestFile.trimStart().startsWith('return ')) {
-    throw Error('manifest.mhp must return a list')
-  }
   let manifest = compile({ file: manifestFile, filename: 'manifest.mhp' })
   if (manifest.error) {
     return false
   }
+
+  if (!manifestFile.trimStart().startsWith('return [')) {
+    throw Error('manifest.mhp must return a list')
+  }
+
   manifest = phpArrayReader.fromString(manifest.compiled.replace('return ', ''))
   const repository = manifest.repository
   const version = manifest.version
@@ -146,12 +148,14 @@ const handleFile = () => {
   console.clear()
 
   const manifestFile = readFileSync('manifest.mhp', 'utf-8')
-  if (!manifestFile.trimStart().startsWith('return ')) {
-    throw Error('manifest.mhp must return a list')
-  }
+
   let manifest = compile({ file: manifestFile, filename: 'manifest.mhp' })
   if (manifest.error) {
     return false
+  }
+
+  if (!manifestFile.trimStart().startsWith('return [')) {
+    throw Error('manifest.mhp must return a list')
   }
 
   const mainFile = readFileSync('index.mhp', 'utf-8')
@@ -174,13 +178,15 @@ eventEmitter.on('compile', handleFile)
 let needUpdate
 
 const manifestFile = readFileSync('manifest.mhp', 'utf-8')
-if (!manifestFile.trimStart().startsWith('return ')) {
-  throw Error('manifest.mhp should return a list')
-}
 let manifest = compile({ file: manifestFile, filename: 'manifest.mhp' })
 if (manifest.error) {
   return false
 }
+
+if (!manifestFile.trimStart().startsWith('return [')) {
+  throw Error('manifest.mhp must return a list')
+}
+
 manifest = phpArrayReader.fromString(manifest.compiled.replace('return ', ''))
 const { repository, version, modules } = manifest
 

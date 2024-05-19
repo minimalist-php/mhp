@@ -27,6 +27,11 @@ module.exports = ({ lines, filename }) => {
       return false
     }
 
+    if (lines[index].includes('use(')) {
+      console.log(`${filename} ${index + 1}`, '- There must be one space between use and (')
+      return false
+    }
+
     return false
   })
 
