@@ -82,11 +82,11 @@ module.exports = ({ lines, filename }) => {
     return true
   })
 
-  return closures.every(closure => {
+  return closures.every((closure, index) => {
     const closureFirstLine = closure.slice(0, 1).pop()
+    const lastClosure = closures.length === index + 1
     let assignments = []
-    closure.every(index => {
-      lines[index] = lines[index].replaceAll('reference_to ', '&$')
+    return closure.every(index => {
       const firstLine = closureFirstLine === index
 
       if (firstLine && lines[index].includes('function (')) {
@@ -98,45 +98,43 @@ module.exports = ({ lines, filename }) => {
             assignments = assignments.concat(scopeAssignments.replace('...', ''))
           }
         }
-        scopeAssignments = lines[index].match(/(?<=use \().*?(?=\))/g)
+        scopeAssignments = lines[index].match(/(?<=use\().*?(?=\))/g)
         if (scopeAssignments) {
           scopeAssignments = [...scopeAssignments][0]
           if (scopeAssignments !== '') {
             scopeAssignments = scopeAssignments.split(', ').map(assignment => {
-              return assignment.replace('&$', '')
+              return assignment.replace(':', '')
             })
             assignments = assignments.concat(scopeAssignments)
           }
         }
       }
 
-      let assignmentBadSpacing = false
+      let badSpacing = false
 
-      arrayCompose([
+      lines[index] = arrayCompose([
         {
           text: lines[index],
           transform: line => {
-            if (line.includes(':') && !line.includes(' : ')) {
-              assignmentBadSpacing = true
+            line = line.replace(' : ', '<ASSIGNMENT>')
+            if (line.includes(': ')) {
+              badSpacing = true
             }
-
+            line = line.replaceAll(':', '&$')
+            const assignment = line.split('<ASSIGNMENT>')
+            if (assignment.length > 1 && (!firstLine || (firstLine && lastClosure))) {
+              assignments = assignments.concat([assignment[0].trimStart()])
+              line = line.replace('<ASSIGNMENT>', ' = ')
+            }
             return line
           }
         },
         ignoreText
       ])
 
-      if (assignmentBadSpacing) {
-        console.log(`${filename} ${index + 1}`, '- There must be a space before and after the colon.')
+      if (badSpacing) {
+        console.log(`${filename} ${index + 1}`, '- Invalid spacing for assignment or reference operator')
         return false
-      }
-
-      if (!firstLine || (firstLine && !lines[index].includes('function ('))) {
-        const assignment = lines[index].split(' : ')
-        if (assignment.length > 1) {
-          lines[index] = lines[index].replace(' : ', ' = ')
-          assignments = assignments.concat([assignment[0].trimStart()])
-        }
       }
 
       assignments.every((assignment) => {
@@ -193,6 +191,5 @@ module.exports = ({ lines, filename }) => {
       })
       return true
     })
-    return true
   })
 }

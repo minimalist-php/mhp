@@ -80,6 +80,11 @@ module.exports = ({ lines, filename }) => {
       return false
     }
 
+    if (lines[index].trimStart().startsWith('return ') && lineAfter.trimStart().replaceAll(';', '').replaceAll(',', '').replaceAll('}', '') !== '') {
+      console.log(`${filename} ${index + 1}`, '- Missing one blank line')
+      return false
+    }
+
     if (lines[index] === '' && lineAfter.trimStart().startsWith('return ') && !lineBefore.includes('function (') && !lineBefore.trimStart().startsWith('if ')) {
       return true
     }
@@ -101,7 +106,7 @@ module.exports = ({ lines, filename }) => {
         'STRING'
       ].find(lineStart => lineBefore.startsWith(lineStart))
 
-      if (!validBeforeLineStart && lineAfter.endsWith('[')) {
+      if (!validBeforeLineStart && (lineAfter.startsWith(' ') && lineAfter.endsWith('['))) {
         console.log(`${filename} ${index + 1}`, '- Invalid blank line')
         return false
       }

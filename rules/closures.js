@@ -7,31 +7,6 @@ module.exports = ({ lines, filename }) => {
       return true
     }
 
-    if ((!lines[index].endsWith('function () {') && lines[index].includes('function ()')) || lines[index].includes('function ( )')) {
-      console.log(`${filename} ${index + 1}`, '- Functions without parameters must not have parentheses.')
-      return true
-    }
-
-    if (lines[index].endsWith(' use') || lines[index].endsWith(' use ()') || lines[index].endsWith(' use ( )')) {
-      console.log(`${filename} ${index + 1}`, '- The keyword "use" in functions must not be used without arguments.')
-      return true
-    }
-
-    if (lines[index].includes('if(')) {
-      console.log(`${filename} ${index + 1}`, '- There must be one space between if and (')
-      return false
-    }
-
-    if (lines[index].includes('function(')) {
-      console.log(`${filename} ${index + 1}`, '- There must be one space between function and (')
-      return false
-    }
-
-    if (lines[index].includes('use(')) {
-      console.log(`${filename} ${index + 1}`, '- There must be one space between use and (')
-      return false
-    }
-
     return false
   })
 
@@ -92,13 +67,21 @@ module.exports = ({ lines, filename }) => {
 
         const nextLineIsCurrentIndentationLevel = nextLine.startsWith(indentationLevel) && !nextLine.startsWith(`${indentationLevel} `)
         let nextLineIsUpperIndentationLevel = false
+
         if (indentationLevel !== '') {
-          nextLineIsUpperIndentationLevel = nextLine.startsWith(' ') && !nextLine.startsWith(indentationLevel)
+          nextLineIsUpperIndentationLevel = !nextLine.startsWith(indentationLevel)
         }
 
         if ((!nextLineIsUpperIndentationLevel && !nextLineIsCurrentIndentationLevel) && closure) {
           closures[closures.length - 1].lines.push(index)
           parsedLines.push(index)
+          return true
+        }
+
+        if (nextLineIsUpperIndentationLevel && closure) {
+          closures[closures.length - 1].lines.push(index)
+          parsedLines.push(index)
+          closure = false
           return true
         }
       }

@@ -10,7 +10,7 @@ module.exports = ({ lines, filename }) => {
   const aliases = {
     list_length: 'count',
     print: 'print_r',
-    exception: 'new Exception'
+    error: 'throw new Exception'
   }
 
   let multilineString = {}

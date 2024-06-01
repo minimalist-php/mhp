@@ -48,8 +48,8 @@ const compile = ({ file, filename }) => {
   return { compiled: lines.join('\n') }
 }
 
-const aModuleFilename = /(?<=module\(")(.*?)(?="\))/
-const aModuleExpression = /module\("(.*?)"\)/
+const aModuleFilename = /(?<=use\(")(.*?)(?="\))/
+const aModuleExpression = /use\("(.*?)"\)/
 
 const closure = parameters => {
   let { name, code } = parameters
@@ -78,7 +78,7 @@ const resoveModule = ({ file, moduleFilename }) => {
     return false
   }
 
-  if (!manifestFile.trimStart().startsWith('return [')) {
+  if (!manifestFile.trimStart().startsWith('<- [')) {
     throw Error('manifest.mhp must return a list')
   }
 
@@ -154,7 +154,7 @@ const handleFile = () => {
     return false
   }
 
-  if (!manifestFile.trimStart().startsWith('return [')) {
+  if (!manifestFile.trimStart().startsWith('<- [')) {
     throw Error('manifest.mhp must return a list')
   }
 
@@ -183,7 +183,7 @@ if (manifest.error) {
   return false
 }
 
-if (!manifestFile.trimStart().startsWith('return [')) {
+if (!manifestFile.trimStart().startsWith('<- [')) {
   throw Error('manifest.mhp must return a list')
 }
 

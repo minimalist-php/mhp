@@ -12,8 +12,18 @@ module.exports = ({ lines, filename }) => {
       return true
     }
 
-    if (lines[index].trimStart().startsWith('if ')) {
-      lines[index] = `${lines[index].replace('if ', 'if (')})`
+    if (lines[index].trimStart().startsWith('if ') || lines[index].includes(' if ') || lines[index].includes('if(') || lines[index].includes('if (')) {
+      console.log(`${filename} ${index + 1}`, '- Use a question mark at the end of the line for conditional code')
+      return false
+    }
+
+    if (lines[index].endsWith('?') && !lines[index].endsWith(' ?')) {
+      console.log(`${filename} ${index + 1}`, '- Missing space before question mark')
+      return false
+    }
+
+    if (lines[index].endsWith(' ?')) {
+      lines[index] = `${' '.repeat(lines[index].length - lines[index].trimStart().length)}if (${lines[index].trimStart().slice(0, -2)})`
     }
 
     return true

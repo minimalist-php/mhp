@@ -38,7 +38,7 @@ module.exports = ({ lines, filename }) => {
         ignoreText({
           text: lines[index],
           transform: text => {
-            itIsBadlySpaced = (text.startsWith('return ') && text.replace('return [', '').includes(' [')) || text.trimStart().replace(' : [', '').replace(' return [', '').includes(' [')
+            itIsBadlySpaced = !text.startsWith('return ') && text.trimStart().replace(' : [', '').replace(' return [', '').includes(' [')
             return text
           }
         })
@@ -55,12 +55,18 @@ module.exports = ({ lines, filename }) => {
         ignoreText({
           text: lines[index],
           transform: text => {
+            if (text.startsWith('return (')) {
+              text = text.replace('return (', 'return(')
+            }
+
+            text = text.replace(' return (', ' return(')
+
             if (text.startsWith('function (')) {
               text = text.replace('function (', 'function(')
             }
+
             text = text.replace(' function (', ' function(')
-            text = text.replace(' use (', ' use(')
-            text = text.replace(')use (', ')use(')
+
             text = text.replace('< (', '<(')
             text = text.replace('> (', '>(')
 
@@ -110,7 +116,7 @@ module.exports = ({ lines, filename }) => {
         ignoreText({
           text: lines[index],
           transform: text => {
-            itIsBadlySpaced = text.replaceAll(';', '').replaceAll(') ', '').replaceAll('))', '').slice(0, -1).includes(')')
+            itIsBadlySpaced = text.replaceAll('?', '').replaceAll(';', '').replaceAll(') ', '').replaceAll('))', '').slice(0, -1).includes(')')
             return text
           }
         })
