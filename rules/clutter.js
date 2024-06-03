@@ -4,13 +4,21 @@ module.exports = ({ lines, filename }) => {
   const clutter = {
     echo: 'print',
     sizeof: 'list_length',
-    count: 'list_length'
+    count: 'magnitud',
+    use: 'usar',
+    null: 'nada',
+    true: 'verdadero',
+    false: 'falso'
   }
 
   const aliases = {
-    list_length: 'count',
+    magnitud: 'count',
     print: 'print_r',
-    error: 'throw new Exception'
+    error: 'throw new Exception',
+    usar: 'use',
+    nada: 'null',
+    verdadero: 'true',
+    falso: 'false'
   }
 
   let multilineString = {}
@@ -29,7 +37,9 @@ module.exports = ({ lines, filename }) => {
         lines[index].trimStart().startsWith(`${functionToAvoid}(`) ||
         lines[index].includes(` ${functionToAvoid}(`) ||
         lines[index].includes(`[${functionToAvoid}(`) ||
-        lines[index].includes(`(${functionToAvoid}(`)
+        lines[index].includes(`(${functionToAvoid}(`) ||
+        lines[index].includes(` ${functionToAvoid} `) ||
+        lines[index].endsWith(` ${functionToAvoid}`)
       ) {
         console.log(`${filename} ${index + 1}`, `- Use ${clutter[functionToAvoid]}() insted of ${functionToAvoid}()`)
         return false

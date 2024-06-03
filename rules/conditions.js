@@ -1,31 +1,48 @@
 const matchMultilineText = require('../lib/match_multiline_text.js')
+const lookFor = require('../lib/list_look_for.js')
 
 module.exports = ({ lines, filename }) => {
   let multilineString = {}
-  return lines.every((line, index) => {
-    multilineString = matchMultilineText({ lines, index, filename, multilineString })
-    if (multilineString.error) {
-      return false
-    }
 
-    if (multilineString.line) {
-      return true
-    }
+  const error = lookFor({
+    list: lines,
+    iteration: ({ entry }) => {
+      if (lines[entry].trimStart().startsWith('#') || lines[entry] === '') {
+        return
+      }
 
-    if (lines[index].trimStart().startsWith('if ') || lines[index].includes(' if ') || lines[index].includes('if(') || lines[index].includes('if (')) {
-      console.log(`${filename} ${index + 1}`, '- Use a question mark at the end of the line for conditional code')
-      return false
-    }
+      multilineString = matchMultilineText({ lines, index: entry, filename, multilineString })
 
-    if (lines[index].endsWith('?') && !lines[index].endsWith(' ?')) {
-      console.log(`${filename} ${index + 1}`, '- Missing space before question mark')
-      return false
-    }
+      if (multilineString.line) {
+        return
+      }
 
-    if (lines[index].endsWith(' ?')) {
-      lines[index] = `${' '.repeat(lines[index].length - lines[index].trimStart().length)}if (${lines[index].trimStart().slice(0, -2)})`
-    }
+      if (lines[entry].trimStart().startsWith('if ') || lines[entry].includes(' if ') || lines[entry].includes('if(') || lines[entry].includes('if (')) {
+        return `${filename} ${entry + 1} - Usa signos de interrogación para código condicional`
+      }
 
-    return true
+      if (lines[entry].trimStart().startsWith('¿ ')) {
+        return `${filename} ${entry + 1} - Sobra un espacio después del signo de interrogación de apertura`
+      }
+
+      if (lines[entry].endsWith(' ?')) {
+        return `${filename} ${entry + 1} - Sobra un espacio antes del signo de interrogación de cierre`
+      }
+
+      if (lines[entry].trimStart().startsWith('¿') || lines[entry].endsWith('?')) {
+        if (!lines[entry].trimStart().startsWith('¿')) {
+          return `${filename} ${entry + 1} - Falta el signo de interrogación de apertura`
+        }
+        if (!lines[entry].endsWith('?')) {
+          return `${filename} ${entry + 1} - Falta el signo de interrogación de cierre`
+        }
+        lines[entry] = `${' '.repeat(lines[entry].length - lines[entry].trimStart().length)}${lines[entry].trimStart().replace('¿', 'if (').slice(0, -1)})`
+      }
+    }
   })
+
+  if (!error) {
+    return true
+  }
+  console.log(error)
 }
