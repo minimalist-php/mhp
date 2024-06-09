@@ -8,6 +8,13 @@ module.exports = ({ lines, filename }) => {
       return false
     }
 
+    lines[index] = lines[index].replaceAll('\\`', '<GRAVEACCENT>')
+    if (lines[index].includes('`')) {
+      console.log(`${filename} ${index + 1}`, '- Para escribir un acento grave utiliza \\`')
+      return false
+    }
+    lines[index] = lines[index].replaceAll('<GRAVEACCENT>', '`')
+
     if (!lines[index].endsWith('<<<STRING') && multilineString.line) {
       return true
     }
@@ -37,6 +44,11 @@ module.exports = ({ lines, filename }) => {
     })()
 
     if (!lines[index].startsWith(' ') && lines[index].endsWith('<<<STRING') && lineBefore !== '') {
+      console.log(`${filename} ${index + 1}`, '- Missing one blank line')
+      return false
+    }
+
+    if (!lines[index].startsWith(' ') && lines[index].endsWith('STRING;') && lineAfter !== '') {
       console.log(`${filename} ${index + 1}`, '- Missing one blank line')
       return false
     }

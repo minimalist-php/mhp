@@ -2,21 +2,23 @@ const matchMultilineText = require('../lib/match_multiline_text.js')
 
 module.exports = ({ lines, filename }) => {
   const clutter = {
-    echo: 'print',
+    print: 'imprimir',
+    echo: 'imprimir',
+    print_r: 'imprimir',
     sizeof: 'list_length',
     count: 'magnitud',
     use: 'usar',
-    null: 'nada',
+    null: 'nulo',
     true: 'verdadero',
     false: 'falso'
   }
 
   const aliases = {
     magnitud: 'count',
-    print: 'print_r',
+    imprimir: 'print_r',
     error: 'throw new Exception',
     usar: 'use',
-    nada: 'null',
+    nulo: 'null',
     verdadero: 'true',
     falso: 'false'
   }

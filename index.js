@@ -5,15 +5,15 @@ const phpArrayReader = require('php-array-reader')
 
 const eventEmitter = new EventEmitter()
 
-const watcher = chokidar.watch('index.mhp', {
+const watcher = chokidar.watch('index.legi', {
   persistent: true
 })
 
-if (!existsSync('manifest.mhp')) {
-  throw Error('manifest.mhp file required')
+if (!existsSync('manifiesto.legi')) {
+  throw Error('Falta el manifiesto (manifiesto.legi)')
 }
 
-const manifestWatcher = chokidar.watch('manifest.mhp', {
+const manifestWatcher = chokidar.watch('manifiesto.legi', {
   persistent: true
 })
 
@@ -72,23 +72,23 @@ const resoveModule = ({ file, moduleFilename }) => {
 
   let moduleFile, moduleFilenameWithVersion
 
-  const manifestFile = readFileSync('manifest.mhp', 'utf-8')
-  let manifest = compile({ file: manifestFile, filename: 'manifest.mhp' })
+  const manifestFile = readFileSync('manifiesto.legi', 'utf-8')
+  let manifest = compile({ file: manifestFile, filename: 'manifiesto.legi' })
   if (manifest.error) {
     return false
   }
 
   if (!manifestFile.trimStart().startsWith('<- [')) {
-    throw Error('manifest.mhp must return a list')
+    throw Error('El manifiesto debe devolver una lista')
   }
 
   manifest = phpArrayReader.fromString(manifest.compiled.replace('return ', ''))
-  const repository = manifest.repository
-  const version = manifest.version
+  const repositorio = manifest.repositorio
+  const versión = manifest.versión
   const modules = manifest.modules
 
-  if (!repository || !version) {
-    throw Error('manifest.mhp must include repository and version')
+  if (!repositorio || !versión) {
+    throw Error('Se debe especificar el repositorio y la versión en el manifiesto (manifiesto.legi)')
   }
 
   moduleFilenameWithVersion = moduleFilename
@@ -110,7 +110,7 @@ const resoveModule = ({ file, moduleFilename }) => {
   if (moduleFile.startsWith('<?php')) {
     moduleFile = moduleFile.replace('<?php\n', '')
   } else {
-    moduleFilenameWithVersion = `${repository}@${version}/${moduleFilename}`
+    moduleFilenameWithVersion = `${repositorio}@${versión}/${moduleFilename}`
     moduleFile = compile({ file: moduleFile, filename: moduleFilename })
     if (moduleFile.error) {
       return
@@ -147,23 +147,23 @@ const resoveModule = ({ file, moduleFilename }) => {
 const handleFile = () => {
   console.clear()
 
-  const manifestFile = readFileSync('manifest.mhp', 'utf-8')
+  const manifestFile = readFileSync('manifiesto.legi', 'utf-8')
 
-  let manifest = compile({ file: manifestFile, filename: 'manifest.mhp' })
+  let manifest = compile({ file: manifestFile, filename: 'manifiesto.legi' })
   if (manifest.error) {
     return false
   }
 
   if (!manifestFile.trimStart().startsWith('<- [')) {
-    throw Error('manifest.mhp must return a list')
+    throw Error('manifiesto.legi must return a list')
   }
 
-  const mainFile = readFileSync('index.mhp', 'utf-8')
+  const mainFile = readFileSync('index.legi', 'utf-8')
   if (mainFile === '') {
     return
   }
 
-  let bundle = compile({ file: mainFile, filename: 'index.mhp' })
+  let bundle = compile({ file: mainFile, filename: 'index.legi' })
   if (bundle.error) {
     return
   }
@@ -177,35 +177,35 @@ eventEmitter.on('compile', handleFile)
 
 let needUpdate
 
-const manifestFile = readFileSync('manifest.mhp', 'utf-8')
-let manifest = compile({ file: manifestFile, filename: 'manifest.mhp' })
+const manifestFile = readFileSync('manifiesto.legi', 'utf-8')
+let manifest = compile({ file: manifestFile, filename: 'manifiesto.legi' })
 if (manifest.error) {
   return false
 }
 
 if (!manifestFile.trimStart().startsWith('<- [')) {
-  throw Error('manifest.mhp must return a list')
+  throw Error('manifiesto.legi must return a list')
 }
 
 manifest = phpArrayReader.fromString(manifest.compiled.replace('return ', ''))
-const { repository, version, modules } = manifest
+const { repositorio, versión, modules } = manifest
 
-if (!repository || !version) {
-  throw Error('manifest.mhp must include repository and version')
+if (!repositorio || !versión) {
+  throw Error('Se debe especificar el repositorio y la versión en el manifiesto (manifiesto.legi)')
 }
 
-if (existsSync('php_modules/manifest.mhp')) {
-  const installedModules = readFileSync('php_modules/manifest.mhp', 'utf-8')
+if (existsSync('php_modules/manifiesto.legi')) {
+  const installedModules = readFileSync('php_modules/manifiesto.legi', 'utf-8')
   if (installedModules !== manifestFile) {
     needUpdate = true
   }
 }
 
-if (modules && !existsSync('php_modules/manifest.mhp')) {
+if (modules && !existsSync('php_modules/manifiesto.legi')) {
   if (!existsSync('php_modules')) {
     mkdirSync('php_modules')
   }
-  writeFileSync('php_modules/manifest.mhp', manifestFile)
+  writeFileSync('php_modules/manifiesto.legi', manifestFile)
   needUpdate = true
 }
 
@@ -219,7 +219,7 @@ if (needUpdate) {
       const text = await response.text()
       if (response.status === 404) {
         console.log(text)
-        rmSync('php_modules/manifest.mhp')
+        rmSync('php_modules/manifiesto.legi')
         return false
       }
       return text
@@ -231,13 +231,13 @@ if (needUpdate) {
     const moduleParts = module.split('/')
 
     const vendor = moduleParts[4]
-    const [repository, version] = moduleParts[5].split('@')
+    const [repositorio, versión] = moduleParts[5].split('@')
 
     if (!existsSync(`php_modules/${vendor}`)) {
       mkdirSync(`php_modules/${vendor}`)
     }
 
-    writeFileSync(`php_modules/${vendor}/${repository}@${version}.php`, moduleFile)
+    writeFileSync(`php_modules/${vendor}/${repositorio}@${versión}.php`, moduleFile)
 
     if (index === modules.length - 1) {
       eventEmitter.emit('compile')
